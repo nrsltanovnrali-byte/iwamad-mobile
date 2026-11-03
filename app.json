@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "iwamad-mobile",
@@ -24,6 +23,9 @@
     },
     "experiments": {
       "baseUrl": "/iwamad-mobile"
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
