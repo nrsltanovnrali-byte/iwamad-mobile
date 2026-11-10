@@ -1,23 +1,21 @@
-
 import { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   FlatList,
+  ActivityIndicator,
+  Pressable,
   StyleSheet,
 } from 'react-native';
 import { router } from 'expo-router';
-import { events } from '../../src/data/events';
+import { useEvents } from '../../src/hooks/useEvents';
 import EventRow from '../../src/components/EventRow';
 
 export default function EventsScreen() {
+  const { data, isPending, isError, error, refetch, isRefetching } = useEvents();
   const [search, setSearch] = useState('');
   const [savedIds, setSavedIds] = useState<number[]>([]);
-
-  const filteredEvents = events.filter(event =>
-    event.title.toLowerCase().includes(search.toLowerCase())
-  );
 
   function toggleSave(id: number) {
     setSavedIds(ids =>
@@ -26,6 +24,32 @@ export default function EventsScreen() {
         : [...ids, id]
     );
   }
+
+  if (isPending) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text>Loading events</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text>Could not load events</Text>
+        <Text>{error?.message}</Text>
+        <Pressable style={styles.button} onPress={() => refetch()}>
+          <Text>Try again</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const events = data ?? [];
+  const filteredEvents = events.filter(event =>
+    event.title.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <View style={styles.container}>
@@ -51,6 +75,8 @@ export default function EventsScreen() {
             onLongPress={() => toggleSave(item.id)}
           />
         )}
+        refreshing={isRefetching}
+        onRefresh={() => refetch()}
         ListEmptyComponent={
           <Text>No events match.</Text>
         }
@@ -62,6 +88,13 @@ export default function EventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
+    backgroundColor: '#f3f4f6',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 16,
     backgroundColor: '#f3f4f6',
   },
@@ -77,5 +110,14 @@ const styles = StyleSheet.create({
   info: {
     fontSize: 14,
     marginBottom: 16,
+  },
+  button: {
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+    marginTop: 12,
   },
 });
